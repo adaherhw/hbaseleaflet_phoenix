@@ -1,0 +1,43 @@
+#create 'trip_ns:trip_table', {NAME => 'trip', VERSIONS => 1}, {NAME => 'fare', VERSIONS => 1}
+create 'leaflet', 'trip'
+put 'leaflet', '1001', 'trip:count', '4'
+put 'leaflet', '1001', 'trip:location', 'new york'
+put 'leaflet', '1001', 'trip:duration', '620'
+put 'leaflet', '1002', 'trip:total', 'new column'
+
+drop table "leaflet";
+
+create table "leaflet" (
+        rowkey varchar not null primary key,
+        "trip"."count" varchar,
+        "trip"."location" varchar,
+        "trip"."duration" varchar,
+        "trip"."total" varchar
+);
+
+select * from "leaflet";
+select rowkey, "total" from "leaflet";
+select rowkey, "count", "location", "duration", "total" from "leaflet";
+select rowkey, "duration", "total" from "leaflet";
+select rowkey, "duration", "total" from "leaflet" where "total" is not null;
+
+drop view "leaflet";
+
+create view "leaflet" (
+        rowkey varchar not null primary key,
+        "trip"."count" varchar,
+        "trip"."location" varchar,
+        "trip"."duration" varchar,
+        "trip"."total" varchar
+);
+
+drop table leaflet.trip;
+create table leaflet.trip (
+        rowkey varchar not null primary key,
+        trip.count varchar,
+        trip.location varchar,
+        trip.duration varchar,
+        trip.total varchar
+);
+
+upsert into leaflet.trip values ('1001', '3', 'New York', '620', 'some information');

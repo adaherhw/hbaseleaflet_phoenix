@@ -1,0 +1,43 @@
+# if you want to drop the table
+disable 'trip_ns:trip_table'
+drop 'trip_ns:trip_table'
+
+#create the table and load data from cars.csv file *NOTE
+create_namespace 'trip_ns'
+create 'trip_ns:trip_table', {NAME => 'trip', VERSIONS => 1}, {NAME => 'fare', VERSIONS => 1}
+mkdir /opt/tripdata
+cd /opt/tripdata
+cp /root/git/leaflet-map/cars.csv .
+awk 'BEGIN {FS=OFS=","} {print $1":"$6,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14}' cars.csv > trip_data_1_key.csv
+hdfs dfs -mkdir /tripstaging
+hdfs dfs -copyFromLocal /opt/tripdata/trip_data_1_key.csv /tripstaging/
+hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.separator=, -Dimporttsv.columns=HBASE_ROW_KEY,trip:medallion,trip:hack_license,trip:vendor_id,trip:rate_code,trip:store_and_fwd_flag,trip:pickup_datetime,trip:dropoff_datetime,trip:passenger_count,trip:trip_time_in_secs,trip:trip_distance,trip:pickup_longitude,trip:pickup_latitude,trip:dropoff_longitude,trip:dropoff_latitude trip_ns:trip_table /tripstaging/trip_data_1_key.csv
+
+*NOTE
+to prepare the file cars.csv, modify SelectData.java, and run "findCars" then "filterCars" functions.
+
+# insert random route files to trip:detail column
+# run HBaseInsertDetail.java 
+
+# aggregate medallion day-trip info into HBase
+# run HBaseInsertAggregate.java
+
+hbase rest start --infoport 12346 --port 12345
+
+# start the tomcat inside Eclipse at port 8086
+# in browser:
+http://sandbox.hortonworks.com:8086/leaflet-map/carmap.html
+
+# input some Medallion #
+
+# some info
+get 'trip_ns:trip_table', '171FD91CBF0D6FABF499A9452A4950D5:2013-01-13 03:55:00'
+get 'trip_ns:trip_table', '0B3D3D51C78E944F68DC04209E86D5F7:2013-01-13 09:14:00'
+get 'trip_ns:trip_table', 'BB8B5987269FE82C5A9CAA78DE6E2F8D:2013-01-13 09:33:00'
+get 'trip_ns:trip_table', 'BB8B5987269FE82C5A9CAA78DE6E2F8D:2013-01-13 08:02:00'
+get 'trip_ns:trip_table', '171FD91CBF0D6FABF499A9452A4950D5:'
+
+http://sandbox.hortonworks.com:12345/trip_ns:trip_table/0B3D3D51C78E944F68DC04209E86D5F7:2013-01-13 09:14:00
+http://sandbox.hortonworks.com:12345/trip_ns:trip_table/0B3D3D51C78E944F68DC04209E86D5F7:2013-01-13 09:14:00/trip:detail
+http://sandbox.hortonworks.com:12345/trip_ns:trip_table/0B3D3D51C78E944F68DC04209E86D5F7:2013-01-13 09:14:00/trip:detail
+http://sandbox.hortonworks.com:12345/trip_ns:trip_table/0B3D3D51C78E944F68DC04209E86D5F7:/
